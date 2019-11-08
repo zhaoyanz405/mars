@@ -19,12 +19,13 @@ class HTTPHeader(dict):
 class HTTPRequest:
     _method = ["GET", "POST", "HEAD", "OPTION"]
 
-    def __init__(self, method=None, url=None, version=None, header=None, **kwargs):
+    def __init__(self, method=None, url=None, version=None, header=None, body=None, **kwargs):
         self.method = method
         self.url = url
         self.version = version
         self.header = header  # type:HTTPHeader
         self.params = kwargs
+        self.body = body
 
 
 class HTTPResponse:
