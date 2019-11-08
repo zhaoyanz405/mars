@@ -6,8 +6,10 @@
 @time: 2019/11/6 14:12
 """
 import datetime
+import json
 import socket
 import traceback
+from json import JSONDecodeError
 
 from exception import HTTPMethodInvalidError
 from http import HTTPRequest, HTTPHeader, HTTPResponse
@@ -80,6 +82,7 @@ class HTTPServer:
                         content_length = request.header.get('Content-Length')
                         if content_length:
                             _end = loc + len(tag) + int(content_length)
+                            request.body = msg[loc + len(tag): loc + len(tag) + int(content_length)]
                         else:
                             _end = loc + len(tag)
                         msg = msg[:_end]
@@ -106,6 +109,8 @@ def adapt(conn, request):
 
     print('------%s--------' % request.method)
     parse_query_params(request)
+    parse_body_params(request)
+    print('request.params: ', request.params)
     if request.method == 'GET':
         response = HTTPResponse(status_code=200, status_msg='OK')
         response.content = "<h1>testst</h1>"
@@ -144,6 +149,21 @@ def parse_query_params(request: HTTPRequest):
             request.params[k] = v
 
     print('params:', request.params)
+
+
+def parse_body_params(request: HTTPRequest):
+    """
+    解析request中的body参数
+    :param request:
+    :return:
+    """
+    print('body', type(request.body), request.body)
+    content_type = request.header.get('Content-Type')
+    if content_type.find("json") >= 0:
+        try:
+            request.params.update(json.loads(request.body))
+        except JSONDecodeError:
+            print('json format error. body: %s' % request.body)
 
 
 if __name__ == '__main__':
