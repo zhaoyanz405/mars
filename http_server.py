@@ -23,11 +23,14 @@ def parse(msg):
     header = HTTPHeader()
     if isinstance(msg, bytes):
         msg = msg.decode('utf-8')
-        print('msg', msg)
+    print('msg', msg.split("\r\n"))
     for i, line in enumerate(msg.split("\r\n")):
         if i == 0:
             request.method, request.url, request.version = line.split(' ')
             print(line)
+
+        if line.count(':') > 1:
+            continue
 
         parts = line.split(':')
         if len(parts) == 2:
@@ -71,13 +74,19 @@ class HTTPServer:
                 if loc:
                     # receive header end
                     over_msg = msg[loc + len(tag):]
-                    msg = msg[: loc + len(tag)]
 
                     try:
                         request = parse(msg)
+                        content_length = request.header.get('Content-Length')
+                        if content_length:
+                            _end = loc + len(tag) + int(content_length)
+                        else:
+                            _end = loc + len(tag)
+                        msg = msg[:_end]
                     except (ValueError, HTTPMethodInvalidError):
                         print(traceback.format_exc())
                         raise
+                    print('msg:', msg)
                     adapt(conn, request)
             except KeyboardInterrupt:
                 break
@@ -95,6 +104,8 @@ def adapt(conn, request):
     :return:
     """
 
+    print('------%s--------' % request.method)
+    parse_query_params(request)
     if request.method == 'GET':
         response = HTTPResponse(status_code=200, status_msg='OK')
         response.content = "<h1>testst</h1>"
@@ -106,6 +117,33 @@ def adapt(conn, request):
         })
 
         conn.send(str(response).encode('utf-8'))
+
+    if request.method == 'POST':
+        response = HTTPResponse(status_code=200, status_msg='OK')
+        conn.send(str(response.response_line).encode('utf-8'))
+        print(request.header)
+        data = conn.recv(int(request.header['Content-Length']))
+        print(data)
+
+
+def parse_query_params(request: HTTPRequest):
+    """
+    解析request中的query参数
+    :param request:
+    :return:
+    """
+
+    parts = request.url.split('?')
+    if len(parts) == 2:
+        request.url = parts[0]
+        if '&' not in parts[1]:
+            return
+
+        for pairs in parts[1].split('&'):
+            k, v = pairs.split('=')
+            request.params[k] = v
+
+    print('params:', request.params)
 
 
 if __name__ == '__main__':
