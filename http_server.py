@@ -49,12 +49,17 @@ class HTTPServer:
         self.host = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.conn = None
+        self.handler_map = {}
+
+    def register_handler(self, **kwargs):
+        self.handler_map.update(kwargs)
 
     def run(self):
         self.socket.bind((self.host, self.port))
         self.socket.listen()
         print('server has been started. ')
-        conn, addr = self.socket.accept()
+        self.conn, addr = self.socket.accept()
         print('listening at %s' % str(addr))
 
         tag = "\r\n\r\n"
@@ -65,7 +70,7 @@ class HTTPServer:
                 if over_msg and not msg:
                     msg = over_msg
 
-                _msg = conn.recv(1024)
+                _msg = self.conn.recv(1024)
                 if not _msg:
                     print('no msg.')
                     break
@@ -90,45 +95,43 @@ class HTTPServer:
                         print(traceback.format_exc())
                         raise
                     print('msg:', msg)
-                    adapt(conn, request)
+                    self.adapt(request)
             except KeyboardInterrupt:
                 break
         self.stop()
 
+    def adapt(self, request):
+        """
+
+        :param request:
+        :return:
+        """
+
+        print('------%s--------' % request.method)
+        parse_query_params(request)
+        parse_body_params(request)
+        print('request.params: ', request.params)
+        if request.method == 'GET':
+            response = HTTPResponse(status_code=200, status_msg='OK')
+            response.content = "<h1>testst</h1>"
+            response.header = HTTPHeader({
+                'Date': datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT"),
+                'Server': 'mars',
+                'Content-Type': 'text/html',
+                'Content-Length': len(response.content)
+            })
+
+            self.conn.send(str(response).encode('utf-8'))
+
+        if request.method == 'POST':
+            response = HTTPResponse(status_code=200, status_msg='OK')
+            self.conn.send(str(response.response_line).encode('utf-8'))
+            print(request.header)
+            data = self.conn.recv(int(request.header['Content-Length']))
+            print(data)
+
     def stop(self):
         self.socket.close()
-
-
-def adapt(conn, request):
-    """
-
-    :param conn:
-    :param request:
-    :return:
-    """
-
-    print('------%s--------' % request.method)
-    parse_query_params(request)
-    parse_body_params(request)
-    print('request.params: ', request.params)
-    if request.method == 'GET':
-        response = HTTPResponse(status_code=200, status_msg='OK')
-        response.content = "<h1>testst</h1>"
-        response.header = HTTPHeader({
-            'Date': datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT"),
-            'Server': 'mars',
-            'Content-Type': 'text/html',
-            'Content-Length': len(response.content)
-        })
-
-        conn.send(str(response).encode('utf-8'))
-
-    if request.method == 'POST':
-        response = HTTPResponse(status_code=200, status_msg='OK')
-        conn.send(str(response.response_line).encode('utf-8'))
-        print(request.header)
-        data = conn.recv(int(request.header['Content-Length']))
-        print(data)
 
 
 def parse_query_params(request: HTTPRequest):
