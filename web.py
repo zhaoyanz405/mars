@@ -6,7 +6,7 @@
 @time: 2019/11/8 17:40
 """
 from exception import HTTPError
-from http import HTTPRequest
+from base import HTTPRequest
 
 
 class RequestHandler:
