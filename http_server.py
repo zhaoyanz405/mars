@@ -10,8 +10,8 @@ import socket
 import traceback
 from json import JSONDecodeError
 
-from exception import HTTPMethodInvalidError
 from base import HTTPRequest, HTTPHeader, HTTPResponse
+from exception import HTTPMethodInvalidError
 
 
 def parse(msg):
@@ -158,7 +158,3 @@ def parse_body_params(request: HTTPRequest):
             request.params.update(json.loads(request.body))
         except JSONDecodeError:
             print('json format error. body: %s' % request.body)
-
-
-if __name__ == '__main__':
-    HTTPServer(host='127.0.0.1', port=8085).run()
