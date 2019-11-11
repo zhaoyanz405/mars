@@ -10,7 +10,7 @@ import unittest
 
 class TestHttpHeader(unittest.TestCase):
     def test_header(self):
-        from http_header import HTTPHeader
+        from base import HTTPHeader
         header = HTTPHeader(server='nginx')
         self.assertIsNotNone(header._header)
 

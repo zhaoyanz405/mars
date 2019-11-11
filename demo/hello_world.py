@@ -8,7 +8,7 @@
 import datetime
 
 from base import HTTPResponse, HTTPHeader
-from http_server import HTTPServer
+from server import HTTPServer
 from web import RequestHandler
 
 
