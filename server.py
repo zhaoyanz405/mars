@@ -72,7 +72,7 @@ class HTTPServer:
                 _msg = self.conn.recv(1024)
                 if not _msg:
                     print('no msg.')
-                    break
+                    continue
 
                 print('_msg: ', _msg)
                 msg += _msg.decode('utf-8')
