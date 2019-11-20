@@ -92,7 +92,12 @@ class HTTPServer:
                         msg = msg[:_end]
                     except (ValueError, HTTPMethodInvalidError):
                         print(traceback.format_exc())
-                        raise
+                        tag = "\r\n\r\n"
+                        msg = ""
+                        over_msg = ""
+                        print('-- continue --')
+                        continue
+
                     print('msg:', msg)
                     self.adapt(request)
             except KeyboardInterrupt:
